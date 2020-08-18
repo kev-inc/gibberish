@@ -22,11 +22,10 @@ function QuestionCardComponent(props) {
                   hint={qna[currentRound-1]['hint']}/>
   } else if(gamestate === gamestates.ROUND_ENDED) {
     component = <RoundEnded 
-                  players={players}
                   timeRemaining={timeRemaining}
                   currentAnswer={qna[currentRound-1]['answer']}/>
   } else if(gamestate === gamestates.GAME_ENDED) {
-    component = <GameEnded players={players}/>
+    component = <GameEnded players={players} roomId={roomId}/>
   } else if(gamestate === gamestates.GAME_WAITING) {
     component = <GameWaiting 
                   roomId={roomId}
@@ -35,7 +34,7 @@ function QuestionCardComponent(props) {
   }
 
   return(
-    <div id="QuestionCardComponent">
+    <div id="QuestionCardComponent" className='tile'>
       <RoomDetailComponent
         currentRound={currentRound}
         roomId={roomId}

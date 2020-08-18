@@ -1,10 +1,9 @@
 import React from 'react'
-import socketIOClient from 'socket.io-client'
 import PlayerListComponent from './PlayerListComponent'
-import PlayerAnswerComponent from './PlayerAnswerComponent'
 import QuestionCardComponent from './QuestionCardComponent'
 import { gamestates } from './gamestates/GameStates'
-const ENDPOINT = process.env.REACT_APP_BASE_URL || 'http://localhost:4000'
+import ChatComponent from './ChatComponent'
+import { Socket } from '../../api/socket'
 
 class GameroomPage extends React.Component {
 
@@ -16,33 +15,20 @@ class GameroomPage extends React.Component {
 			players: [],
 			qna: [],
 			theme: '',
-			userAnswer: '',
 			timeRemaining: 0,
-			helpText: '',
-			userAnswered: false,
 			loaded: false
 		}
 	}
 
 	componentDidMount() {
 		const { nickname, roomId } = this.props
-		this.socket = socketIOClient(ENDPOINT)
-		this.socket.emit('joinRoom', { nickname, roomId })
-		this.socket.on('err', message => {
+		Socket.joinRoom(nickname, roomId)
+		Socket.watchErrors(message => {
 			alert(message)
 			this.props.toJoinroomPage()
 		})
-		this.socket.on('updateRoom', message => {
+		Socket.watchUpdates(message => {
 			const { currentRound, gameState, players, qna, theme, roomId, timer } = message
-			var { userAnswered, userAnswer, helpText } = this.state
-			if (gameState === gamestates.ROUND_LOADING) {
-				userAnswered = false
-				userAnswer = ''
-			} else if (gameState === gamestates.ROUND_ENDED) {
-				userAnswered = true
-				userAnswer = ''
-				helpText = ''
-			}
 			this.props.updateRoomId(roomId)
 			this.setState({
 				currentRound,
@@ -51,58 +37,25 @@ class GameroomPage extends React.Component {
 				qna,
 				theme,
 				timeRemaining: timer,
-				userAnswer,
-				userAnswered,
-				helpText,
 				loaded: true
 			})
 		})
 	}
 
-	submitAnswer = e => {
-		e.preventDefault()
-		const { gamestate, userAnswered } = this.state
-		if (gamestate === gamestates.ROUND_ONGOING && !userAnswered) {
-			const { userAnswer, currentRound, qna } = this.state
-			const { roomId } = this.props
-			const currentAnswer = qna[currentRound - 1]['answer']
-			if (currentAnswer.toLowerCase() === userAnswer.toLowerCase()) {
-				this.setState({ helpText: 'Correct!', userAnswer: '', userAnswered: true }, () => {
-					this.socket.emit('submitAnswer', { roomId })
-				})
-			} else {
-				this.setState({ helpText: 'Please try again!', userAnswer: '' })
-			}
-		}
-	}
-
-	onAnswerFieldChanged = event => {
-		this.setState({ userAnswer: event.target.value })
-	}
-
-	handlePlayAgain = e => {
-		e.preventDefault()
-		const { roomId } = this.props
-		this.socket.emit('playAgain', { roomId })
-	}
-
 	render() {
-		const { loaded, gamestate, currentRound, players, qna, theme, userAnswer, timeRemaining, helpText, userAnswered } = this.state
+		const { loaded, gamestate, currentRound, players, qna, theme, chat, timeRemaining } = this.state
 		const { nickname, roomId } = this.props
 		return (
 			<div className="container">
 				<div className="grid">
 					<a href='/' className='h3 title'>Guess The Gibberish</a>
-					<div className="row header">
-						<div id="header" className="col tile">
+					<div className="row">
+						<div className="col">
 							<QuestionCardComponent
 								roomId={roomId}
 								currentRound={currentRound}
 								gamestate={gamestate}
 								players={players}
-								startNextRound={this.startNextRound}
-								transitionToState={this.transitionToState}
-								updateScores={this.updateScores}
 								qna={qna}
 								theme={theme}
 								timeRemaining={timeRemaining}
@@ -111,21 +64,19 @@ class GameroomPage extends React.Component {
 					</div>
 
 					<div className="row">
-						<div id="left" className="col tile">
+						<div className="col-12 col-md-6 order-12 order-md-1">
 							<PlayerListComponent
 								players={players}
 								myID={nickname} />
 						</div>
-
-						<div id="right" className="col tile">
-							<PlayerAnswerComponent
-								gamestate={gamestate}
-								userAnswer={userAnswer}
-								helpText={helpText}
-								userAnswered={userAnswered}
-								onAnswerFieldChanged={this.onAnswerFieldChanged}
-								submitAnswer={this.submitAnswer}
-								handlePlayAgain={this.handlePlayAgain} />
+						<div className="col-12 col-md-6 order-1 order-md-12">
+							<ChatComponent 
+								roomId={roomId} 
+								chat={chat} 
+								nickname={nickname} 
+								currentRound={currentRound}
+								qna={qna}
+								gamestate={gamestate}/>
 						</div>
 					</div>
 				</div>
