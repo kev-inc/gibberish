@@ -6,7 +6,9 @@ function sendText(e, roomId, message, senderName, gamestate, qna, currentRound, 
   if(message !== "") {
     if(gamestate === 'ROUND_ONGOING') {
       const answer = qna[currentRound - 1]['answer']
-      if(message.toLowerCase() === answer.toLowerCase()) {
+      answer = answer.toLowerCase().replace(/ /g, '')
+      const userAns = message.toLowerCase().replace(/ /g, '')
+      if(answer === userAns) {
         Socket.submitAnswer(roomId)
         setmessage("")
       } else {
