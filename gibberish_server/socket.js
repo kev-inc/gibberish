@@ -1,5 +1,11 @@
 const questions = require('./sample_questions')
 const uid = require("uid");
+const low = require('lowdb')
+const FileSync = require('lowdb/adapters/FileSync')
+const adapter = new FileSync('db.json')
+const db = low(adapter)
+
+db.defaults({ logs: [], rooms: 0, players: 0}).write()
 
 var rooms = new Map()
 var players = new Map()
@@ -49,6 +55,7 @@ module.exports = (io) => {
           qna: getRandomQuestions([], theme),
           timer: 0
         }
+        db.update('rooms', n => n + 1).write()
       } else {
         room = rooms.get(roomId)
         if (room) {
@@ -63,6 +70,8 @@ module.exports = (io) => {
           return
         }
       }
+      db.update('players', n => n + 1).write()
+      db.get('logs').push({id: socket.id, user: nickname, room: roomId, timestamp: Date.now(), action: 'join'}).write()
       players.set(socket.id, roomId)
       rooms.set(roomId, room)
       socket.join(roomId)
@@ -77,8 +86,6 @@ module.exports = (io) => {
         senderId: socket.id,
         senderName: ''
       })
-      console.log('Rooms:' + Array.from(rooms.keys()))
-      console.log('Players:' + Array.from(players.keys()))
     })
 
     socket.on('disconnect', () => {
@@ -100,9 +107,9 @@ module.exports = (io) => {
         } else {
           rooms.delete(roomId)
         }
+        db.get('logs').push({id: socket.id, room: roomId, timestamp: Date.now(), action: 'left'}).write()
+
       }
-      console.log('Rooms:' + Array.from(rooms.keys()))
-      console.log('Players:' + Array.from(players.keys()))
     })
 
     socket.on('startGame', ({ roomId }) => {

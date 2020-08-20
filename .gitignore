@@ -1,2 +1,3 @@
 gibberish_client/.env
 gibberish_client/.firebase
+gibberish_server/db.json
