@@ -77,10 +77,10 @@ class LandingPage extends React.Component {
         const { roomId } = this.props
         return (
             <div>
-                <div className="container" id="landingPage">
+                <div className="container" >
                     <div className="text-center">
                         <div className="grid">
-                            <div className="row">
+                            <div className="row pt-4">
                                 <div className="col">
                                     <h1 id="title">Guess the Gibberish</h1>
                                 </div>

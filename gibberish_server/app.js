@@ -12,6 +12,7 @@ const server = http.createServer(app);
 const io = socketio(server)
 const PORT = 4000;
 
+
 // connect to mongo database
 // mongoose.connect(process.env.MONGODB_URL, { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true });
 
